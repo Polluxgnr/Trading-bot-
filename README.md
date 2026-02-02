@@ -5,96 +5,162 @@
 ![Status](https://img.shields.io/badge/Status-Live%20Cloud%20Deployment-red.svg?style=for-the-badge)
 ![Finance](https://img.shields.io/badge/Finance-Alpaca%20%7C%20Yahoo-green.svg?style=for-the-badge)
 
-**AEGIS** est un système de trading algorithmique institutionnel conçu pour la gestion autonome d'un portefeuille multi-actifs (Actions Tech, ETFs, Or). Contrairement aux bots classiques basés sur des indicateurs techniques isolés, AEGIS utilise un **"AI Logic Gate"** (Mistral Large 2) pour valider chaque signal technique par une analyse de sentiment macro-économique en temps réel.
+**AEGIS** est un système de trading algorithmique institutionnel conçu pour la gestion autonome d’un portefeuille multi-actifs (Actions Tech, ETFs, Or). Contrairement aux bots classiques basés sur des indicateurs techniques isolés, AEGIS utilise un **« AI Logic Gate »** (Mistral Large 2) pour valider chaque signal technique via une analyse de sentiment macro-économique en temps réel.
 
 ---
 
 ## 🏗️ Architecture du Système (Sentinel Framework)
 
-Le système opère sur une instance Google Cloud 24/7 et exécute un cycle de décision structuré en 4 couches de défense :
+Le système opère 24/7 sur une instance Google Cloud et exécute un cycle de décision structuré en quatre couches de défense.
 
-### 1. 📥 Ingestion & Data Hygiene
-* **Hybrid Pipeline** : Ingestion via `yfinance` optimisée avec `curl_cffi` pour assurer la stabilité des flux de données sur les serveurs Cloud.
-* **Asset Universe** : Surveillance dynamique de 32 tickers incluant les indices (`SPY`, `QQQ`), les leaders technologiques (`AAPL`, `NVDA`, `GOOGL`), et les actifs de refuge (`GLD`).
+```mermaid
+graph TD
+    subgraph "1. DATA LAYER (Vision)"
+        A[Yahoo Finance API] -->|Historical Data| B[curl_cffi / yfinance]
+        B -->|OHLCV Data| C[Data Cleaning & Features]
+    end
 
-### 2. 🧠 Strategy Core: "Trend King" Logic
-Le moteur décisionnel suit une logique de suivi de tendance robuste :
-* **Market Regime Filter** : Analyse de la tendance primaire via la $SMA 200$ sur le SPY.
-    * **Régime ATTACK** : Si $Prix > SMA200$, le bot déploie le capital sur les actifs à fort momentum.
-    * **Régime DEFENSE** : Si $Prix < SMA200$, le système liquide les positions risquées pour se réfugier en Cash ou en Or.
-* **Mistral Oracle** : L'IA valide l'analyse technique en traitant les news récentes pour éliminer les "faux signaux" via un moteur NLP avancé.
+    subgraph "2. INTELLIGENCE LAYER (Brain)"
+        C --> D{Market Regime Filter}
+        D -->|Price > SMA 200| E[Mode ATTACK]
+        D -->|Price < SMA 200| F[Mode DEFENSE]
+        E --> G[Mistral Large 2 Oracle]
+        G -->|Sentiment & News Check| H[Final Signal Validation]
+    end
 
-### 3. 🛡️ Risk Engineering & Execution
-* **Anti-Leverage Policy** : Allocation stricte sur le cash disponible (Notional Trading) pour éliminer tout risque de liquidation.
-* **Dynamic Rebalancing** : Ajustement automatique du portefeuille pour maintenir une exposition équilibrée entre les leaders du marché.
-* **Alpaca Integration** : Exécution directe des ordres via API avec gestion robuste des erreurs.
+    subgraph "3. RISK & EXECUTION (Sentinel)"
+        H --> I[Dynamic Rebalancing]
+        I -->|Notional Trading| J[Alpaca Markets API]
+        J -->|Order Confirmation| K[Portfolio State Management]
+    end
 
-### 4. 📊 Monitoring & Visual Intelligence
-* **Live Dashboard** : Interface Streamlit temps réel (Port 8501) affichant la courbe d'équité et le régime actuel.
+    subgraph "4. MONITORING (Interface)"
+        K --> L[Streamlit Dashboard]
+        K --> M[Discord Sentinel Reports]
+    end
+
+    style G fill:#7C3AED,color:#fff
+    style D fill:#f96,stroke:#333
+    style J fill:#00d1b2,color:#fff
+````
+
+### Cycle de Décision AEGIS
+
+**Ingestion & Hygiène**
+Le bot collecte les données de 32 actifs via une session `curl_cffi` afin de garantir la stabilité des flux et contourner les limitations réseau sur Google Cloud.
+
+**Filtre de Régime**
+Le système analyse le SPY par rapport à sa moyenne mobile à 200 jours (SMA 200). En régime baissier, toute prise de risque est verrouillée et le portefeuille se replie en Cash ou Or.
+
+**Validation IA**
+Mistral Large 2 agit comme filtre final. Il analyse les actualités récentes associées aux actifs techniquement sélectionnés afin d’éliminer les faux signaux (bull traps).
+
+**Exécution & Surveillance**
+Les ordres sont exécutés via Alpaca en cash-only (sans levier). L’état du portefeuille est synchronisé avec le dashboard Streamlit et notifié automatiquement sur Discord.
+
+---
+
+## 🧠 Stratégie « Trend King » & Gestion des Risques
+
+**Market Regime Filter**
+Analyse de la tendance primaire via la SMA 200 sur le SPY.
+• **Régime ATTACK** : Prix > SMA200 → déploiement du capital sur les actifs à fort momentum.
+• **Régime DEFENSE** : Prix < SMA200 → liquidation des positions risquées et refuge en Cash / Or.
+
+**Anti-Leverage Policy**
+Allocation strictement basée sur le cash disponible (notional trading) afin d’éliminer tout risque de liquidation.
+
+**Dynamic Rebalancing**
+Rééquilibrage automatique du portefeuille pour maintenir une exposition optimale entre leaders de marché et actifs défensifs.
+
+**Asset Universe**
+Surveillance dynamique de 32 tickers incluant indices (`SPY`, `QQQ`), leaders Tech (`AAPL`, `NVDA`, `GOOGL`) et actifs refuges (`GLD`).
+
+---
+
+## 📊 Monitoring & Visual Intelligence
+
+**Live Dashboard**
+Interface Streamlit temps réel (port 8501) affichant la courbe d’équité, le régime actif et l’état du portefeuille.
 ![AEGIS Dashboard](streamlit_screenshot.png)
 
-* **Discord Sentinel** : Reporting quotidien automatisé incluant des snapshots graphiques et le résumé de l'analyse IA.
+**Discord Sentinel**
+Reporting quotidien automatisé avec snapshots graphiques et résumé de l’analyse IA.
 ![Discord Report](discord_screenshot.png)
 
 ---
 
 ## ⚡ Backtesting & Validation Pipeline
 
-### Méthodologie de Test :
-* **Vectorized Backtesting** : Simulation via `pandas` sur 2 ans de données historiques (OHLCV) pour calculer le ratio de Sharpe et le Drawdown maximum.
-* **Out-of-Sample Testing** : Validation du modèle sur des données inédites pour éviter l'overfitting.
-* **Stress Testing** : Simulation de crashs (ex: 2022) pour vérifier l'efficacité du basculement en mode **DEFENSE**.
+**Vectorized Backtesting**
+Simulations `pandas` sur deux ans de données historiques OHLCV pour calcul du ratio de Sharpe et du drawdown maximal.
 
-### 📊 Stratégie "Trend King" : Aperçu des Backtests (Insights)
+**Out-of-Sample Testing**
+Validation du modèle sur des données inédites afin d’éviter l’overfitting.
 
-| Scénario Testé | Comportement Observé | Impact sur le Portefeuille |
-| :--- | :--- | :--- |
-| **Marché Haussier** | Long-only sur leaders Tech | Maximisation du rendement pondéré |
-| **Marché Volatile** | Rotation vers l'Or (GLD) & Cash | Réduction drastique du Drawdown |
-| **Annonces Macro (Fed)** | Pause stratégique via l'Oracle IA | Évitement de la volatilité court-terme |
+**Stress Testing**
+Simulation de crashs de marché (ex. 2022) pour vérifier l’efficacité du basculement automatique en mode **DEFENSE**.
+
+| Scénario Testé       | Comportement Observé            | Impact sur le Portefeuille             |
+| -------------------- | ------------------------------- | -------------------------------------- |
+| Marché Haussier      | Long-only sur leaders Tech      | Maximisation du rendement              |
+| Marché Volatile      | Rotation vers Or (GLD) & Cash   | Réduction drastique du drawdown        |
+| Annonces Macro (Fed) | Pause stratégique via Oracle IA | Évitement de la volatilité court terme |
 
 ---
 
 ## 🛠️ Technology Stack
-* **Core** : Python 3.11 (Architecture modulaire : `Brain`, `Data`, `Execution`)
-* **Cloud** : Google Cloud Platform (Compute Engine Debian)
-* **IA** : Mistral Large 2 (Decision Validation via NLP)
-* **Visuals** : Plotly & Streamlit
-* **Automation** : Bash Sentinel scripts pour l'auto-restart et la persistence
+
+**Core** : Python 3.11 (architecture modulaire `Brain`, `Data`, `Execution`)
+
+**Cloud** : Google Cloud Platform (Compute Engine Debian)
+
+**IA** : Mistral Large 2 (validation décisionnelle via NLP)
+
+**Visuals** : Plotly & Streamlit
+
+**Automation** : Scripts Bash Sentinel pour auto-restart et persistance
+
+**Sécurité** : Configuration VPC stricte, exposition limitée au port `tcp:8501`
 
 ---
 
 ## 🚀 Installation & Autonomous Setup
 
 ### 1. Initialisation
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-
 ```
 
 ### 2. Déploiement du Trading Bot (24/7)
 
 ```bash
-# Lance le bot en arrière-plan avec protection contre les crashs
+# Lancement en arrière-plan avec protection contre les crashs
 nohup ./run_bot.sh > output.log 2>&1 &
-
 ```
 
 ### 3. Déploiement du Dashboard
 
 ```bash
-# Lance l'interface visuelle sur le port 8501
-nohup python3 -m streamlit run interfaces/dashboard.py --server.port 8501 --server.address 0.0.0.0 > streamlit.log 2>&1 &
-
+# Lancement de l’interface visuelle sur le port 8501
+nohup python3 -m streamlit run interfaces/dashboard.py \
+  --server.port 8501 \
+  --server.address 0.0.0.0 > streamlit.log 2>&1 &
 ```
 
 ---
 
 ## 🛡️ Disclaimer
 
-*Ce projet est une démonstration technique de finance quantitative. Le trading comporte des risques réels. L'utilisation de ce logiciel est sous l'entière responsabilité de l'utilisateur.*
+Ce projet est une démonstration technique de finance quantitative.
+Le trading comporte des risques réels. L’utilisation de ce logiciel est sous l’entière responsabilité de l’utilisateur.
+
+
+
+
 
 # 🛡️ Project AEGIS: Autonomous AI-Driven Portfolio Hedge Fund
 
@@ -103,7 +169,7 @@ nohup python3 -m streamlit run interfaces/dashboard.py --server.port 8501 --serv
 ![Status](https://img.shields.io/badge/Status-Live%20Cloud%20Deployment-red.svg?style=for-the-badge)
 ![Finance](https://img.shields.io/badge/Finance-Alpaca%20%7C%20Yahoo-green.svg?style=for-the-badge)
 
-**AEGIS** is an institutional-grade algorithmic trading system designed for the autonomous management of a multi-asset portfolio (Tech Equities, ETFs, Gold). Unlike conventional bots built on isolated technical indicators, AEGIS uses an **“AI Logic Gate”** (Mistral Large 2) to validate every technical signal through real-time macroeconomic sentiment analysis.
+**AEGIS** is an institutional-grade algorithmic trading system designed for the autonomous management of a multi-asset portfolio (Tech Equities, ETFs, Gold). Unlike conventional bots based on isolated technical indicators, AEGIS relies on an **“AI Logic Gate”** (Mistral Large 2) to validate every technical signal through real-time macroeconomic sentiment analysis.
 
 ---
 
@@ -111,65 +177,127 @@ nohup python3 -m streamlit run interfaces/dashboard.py --server.port 8501 --serv
 
 The system runs 24/7 on a Google Cloud instance and executes a structured decision cycle across four defensive layers.
 
-### 1. 📥 Ingestion & Data Hygiene
-* **Hybrid Pipeline**: Data ingestion via `yfinance`, optimized with `curl_cffi` to ensure stable data streams on cloud servers.
-* **Asset Universe**: Dynamic monitoring of 32 tickers, including indices (`SPY`, `QQQ`), technology leaders (`AAPL`, `NVDA`, `GOOGL`), and safe-haven assets (`GLD`).
+```mermaid
+graph TD
+    subgraph "1. DATA LAYER (Vision)"
+        A[Yahoo Finance API] -->|Historical Data| B[curl_cffi / yfinance]
+        B -->|OHLCV Data| C[Data Cleaning & Features]
+    end
 
-### 2. 🧠 Strategy Core: “Trend King” Logic
-The decision engine follows a robust trend-following framework.
-* **Market Regime Filter**: Primary trend analysis using the 200-day SMA on SPY.  
-  * **ATTACK Regime**: If Price > SMA200, capital is deployed into high-momentum assets.  
-  * **DEFENSE Regime**: If Price < SMA200, risky positions are liquidated in favor of Cash or Gold.
-* **Mistral Oracle**: The AI validates technical signals by processing recent news to eliminate false signals via an advanced NLP engine.
+    subgraph "2. INTELLIGENCE LAYER (Brain)"
+        C --> D{Market Regime Filter}
+        D -->|Price > SMA 200| E[ATTACK Mode]
+        D -->|Price < SMA 200| F[DEFENSE Mode]
+        E --> G[Mistral Large 2 Oracle]
+        G -->|Sentiment & News Check| H[Final Signal Validation]
+    end
 
-### 3. 🛡️ Risk Engineering & Execution
-* **Anti-Leverage Policy**: Strict allocation based solely on available cash (notional trading) to eliminate any liquidation risk.
-* **Dynamic Rebalancing**: Automatic portfolio adjustments to maintain balanced exposure across market leaders.
-* **Alpaca Integration**: Direct order execution via API with robust error handling.
+    subgraph "3. RISK & EXECUTION (Sentinel)"
+        H --> I[Dynamic Rebalancing]
+        I -->|Notional Trading| J[Alpaca Markets API]
+        J -->|Order Confirmation| K[Portfolio State Management]
+    end
 
-### 4. 📊 Monitoring & Visual Intelligence
-* **Live Dashboard**: Real-time Streamlit interface (Port 8501) displaying the equity curve and the current regime.  
+    subgraph "4. MONITORING (Interface)"
+        K --> L[Streamlit Dashboard]
+        K --> M[Discord Sentinel Reports]
+    end
+
+    style G fill:#7C3AED,color:#fff
+    style D fill:#f96,stroke:#333
+    style J fill:#00d1b2,color:#fff
+````
+
+### AEGIS Decision Cycle
+
+**Ingestion & Data Hygiene**
+The bot collects data for 32 assets using a `curl_cffi` session to ensure data stability and bypass network limitations on Google Cloud.
+
+**Market Regime Filter**
+The system analyzes the SPY relative to its 200-day Simple Moving Average (SMA 200). In bearish conditions, all risk exposure is locked and capital is shifted into Cash or Gold.
+
+**AI Validation**
+Mistral Large 2 acts as a final validation layer, analyzing recent news associated with technically selected assets to eliminate false signals (bull traps).
+
+**Execution & Monitoring**
+Orders are executed via Alpaca on a cash-only basis (no leverage). System state is synchronized with the Streamlit dashboard and automatically reported on Discord.
+
+---
+
+## 🧠 “Trend King” Strategy & Risk Management
+
+**Market Regime Logic**
+Primary trend detection using the SMA 200 on SPY.
+• **ATTACK Regime**: Price > SMA200 → capital deployment into high-momentum assets.
+• **DEFENSE Regime**: Price < SMA200 → liquidation of risky positions and flight to Cash / Gold.
+
+**Anti-Leverage Policy**
+Strict allocation based exclusively on available cash (notional trading), fully eliminating liquidation risk.
+
+**Dynamic Rebalancing**
+Automatic portfolio rebalancing to maintain optimal exposure across market leaders and defensive assets.
+
+**Asset Universe**
+Dynamic monitoring of 32 tickers including indices (`SPY`, `QQQ`), tech leaders (`AAPL`, `NVDA`, `GOOGL`), and safe-haven assets (`GLD`).
+
+---
+
+## 📊 Monitoring & Visual Intelligence
+
+**Live Dashboard**
+Real-time Streamlit interface (port 8501) displaying equity curve, active regime, and portfolio state.
 ![AEGIS Dashboard](streamlit_screenshot.png)
 
-* **Discord Sentinel**: Automated daily reporting including chart snapshots and AI analysis summaries.  
+**Discord Sentinel**
+Automated daily reporting with chart snapshots and AI-generated analysis summaries.
 ![Discord Report](discord_screenshot.png)
 
 ---
 
 ## ⚡ Backtesting & Validation Pipeline
 
-### Testing Methodology
-* **Vectorized Backtesting**: `pandas`-based simulations over two years of historical OHLCV data to compute the Sharpe ratio and maximum drawdown.
-* **Out-of-Sample Testing**: Model validation on unseen data to prevent overfitting.
-* **Stress Testing**: Simulation of market crashes (e.g. 2022) to verify the effectiveness of switching into **DEFENSE** mode.
+**Vectorized Backtesting**
+`pandas`-based simulations over two years of historical OHLCV data to compute Sharpe ratio and maximum drawdown.
 
-### 📊 “Trend King” Strategy: Backtest Insights
+**Out-of-Sample Testing**
+Model validation on unseen data to prevent overfitting.
 
-| Tested Scenario | Observed Behavior | Portfolio Impact |
-| :--- | :--- | :--- |
-| **Bull Market** | Long-only exposure to Tech leaders | Maximization of weighted returns |
-| **Volatile Market** | Rotation into Gold (GLD) & Cash | Drastic drawdown reduction |
-| **Macro Announcements (Fed)** | Strategic pause via the AI Oracle | Avoidance of short-term volatility |
+**Stress Testing**
+Market crash simulations (e.g., 2022) to verify the effectiveness of automatic switching into **DEFENSE** mode.
+
+| Tested Scenario    | Observed Behavior                  | Portfolio Impact                |
+| ------------------ | ---------------------------------- | ------------------------------- |
+| Bull Market        | Long-only exposure to Tech leaders | Return maximization             |
+| Volatile Market    | Rotation into Gold (GLD) & Cash    | Drastic drawdown reduction      |
+| Macro Events (Fed) | Strategic pause via AI Oracle      | Short-term volatility avoidance |
 
 ---
 
 ## 🛠️ Technology Stack
-* **Core**: Python 3.11 (Modular architecture: `Brain`, `Data`, `Execution`)
-* **Cloud**: Google Cloud Platform (Compute Engine, Debian)
-* **AI**: Mistral Large 2 (Decision validation via NLP)
-* **Visuals**: Plotly & Streamlit
-* **Automation**: Bash Sentinel scripts for auto-restart and persistence
+
+**Core**: Python 3.11 (modular architecture: `Brain`, `Data`, `Execution`)*
+
+**Cloud**: Google Cloud Platform (Compute Engine, Debian)
+
+**AI**: Mistral Large 2 (decision validation via NLP)
+
+**Visuals**: Plotly & Streamlit
+
+**Automation**: Bash Sentinel scripts for auto-restart and persistence
+
+**Security**: Strict VPC configuration, limited exposure on `tcp:8501`
 
 ---
 
 ## 🚀 Installation & Autonomous Setup
 
 ### 1. Initialization
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-````
+```
 
 ### 2. Trading Bot Deployment (24/7)
 
@@ -182,13 +310,15 @@ nohup ./run_bot.sh > output.log 2>&1 &
 
 ```bash
 # Launch the visual interface on port 8501
-nohup python3 -m streamlit run interfaces/dashboard.py --server.port 8501 --server.address 0.0.0.0 > streamlit.log 2>&1 &
+nohup python3 -m streamlit run interfaces/dashboard.py \
+  --server.port 8501 \
+  --server.address 0.0.0.0 > streamlit.log 2>&1 &
 ```
 
 ---
 
 ## 🛡️ Disclaimer
 
-*This project is a technical demonstration of quantitative finance. Trading involves real risk. Use of this software is entirely at the user’s own responsibility.*
+This project is a technical demonstration of quantitative finance.
+Trading involves real risk. Use of this software is entirely at the user’s own responsibility.
 
-```
