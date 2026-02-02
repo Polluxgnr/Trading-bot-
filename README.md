@@ -32,8 +32,9 @@ Le moteur décisionnel suit une logique de suivi de tendance robuste :
 
 ### 4. 📊 Monitoring & Visual Intelligence
 * **Live Dashboard** : Interface Streamlit temps réel (Port 8501) affichant la courbe d'équité et le régime actuel.
+* ![AEGIS Dashboard](assets/streamlit_screenshot.png)
 * **Discord Sentinel** : Reporting quotidien automatisé incluant des snapshots graphiques et le résumé de l'analyse IA.
-
+![Discord Report](assets/discord_screenshot.png)
 ---
 
 ## ⚡ Backtesting & Validation Pipeline
