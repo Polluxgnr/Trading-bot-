@@ -108,15 +108,16 @@ Simulation de crashs de marché (ex. 2022) pour vérifier l’efficacité du bas
 | Annonces Macro (Fed) | Pause stratégique via Oracle IA | Évitement de la volatilité court terme |
 
 ---
-### 📈 Résultats Historiques (Backtest 2023 - 2026)
+### 📊 Aperçu des Performances du Backtest (2023 - 2026)
 
-Le graphique ci-dessous illustre la performance du bot AEGIS SENTINEL comparée à l'indice S&P 500 sur les 1024 derniers jours de trading.
+Le graphique ci-dessous compare la croissance d'un capital initial de **$10,000** entre la stratégie AEGIS SENTINEL et l'indice de référence S&P 500.
 
-![AEGIS Backtest Results](assets/backtest_results.png)
+![AEGIS Backtest Results](backtest_results.png)
 
-* **Performance AEGIS** : +184.56%  
-* **Performance Benchmark (SPY)** : +87.58%  
-* **Alpha Généré** : +96.98%
+* **Performance AEGIS** : +184.56% ($28,456)
+* **Performance S&P 500** : +87.58%
+* **Surperformance (Alpha)** : +96.98%
+* **Stabilité** : On observe des phases de "plateau" horizontales correspondant aux basculements automatiques en mode **DEFENSE**, préservant le capital lors des baisses du marché.
   
 
 ## 🛠️ Technology Stack
