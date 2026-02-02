@@ -108,6 +108,16 @@ Simulation de crashs de marché (ex. 2022) pour vérifier l’efficacité du bas
 | Annonces Macro (Fed) | Pause stratégique via Oracle IA | Évitement de la volatilité court terme |
 
 ---
+### 📈 Résultats Historiques (Backtest 2023 - 2026)
+
+Le graphique ci-dessous illustre la performance du bot AEGIS SENTINEL comparée à l'indice S&P 500 sur les 1024 derniers jours de trading.
+
+![AEGIS Backtest Results](assets/backtest_results.png)
+
+* **Performance AEGIS** : +184.56%  
+* **Performance Benchmark (SPY)** : +87.58%  
+* **Alpha Généré** : +96.98%
+  
 
 ## 🛠️ Technology Stack
 
@@ -246,11 +256,11 @@ Dynamic monitoring of 32 tickers including indices (`SPY`, `QQQ`), tech leaders 
 
 **Live Dashboard**
 Real-time Streamlit interface (port 8501) displaying equity curve, active regime, and portfolio state.
-![AEGIS Dashboard](streamlit_screenshot.png)
+
 
 **Discord Sentinel**
 Automated daily reporting with chart snapshots and AI-generated analysis summaries.
-![Discord Report](discord_screenshot.png)
+
 
 ---
 
