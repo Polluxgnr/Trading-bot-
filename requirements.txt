@@ -1,0 +1,10 @@
+yfinance
+pandas
+numpy
+alpaca-trade-api
+requests
+colorama
+scipy
+matplotlib
+plotly
+streamlit
